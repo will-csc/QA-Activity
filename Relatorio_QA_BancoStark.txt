@@ -1,0 +1,103 @@
+
+RELATÓRIO DE QA - BANCO DO STARK
+
+PARTE 04 — Casos de Teste (atividade)
+
+Template — Caso de Teste 1
+ID: CT-001
+Título/Objetivo: Validar bloqueio de saque acima do saldo
+Pré-condição: Conta 'tony' com saldo de 1000.0 (após depósitos iniciais)
+Passos:
+1. Executar o método banco.sacar('tony', 100000)
+2. Observar a mensagem de saída
+Resultado esperado: O sistema deve exibir mensagem de erro informando saldo insuficiente e não realizar o saque.
+Resultado obtido: ERRO - Saldo insuficiente
+Status (Pass/Fail): Pass
+Evidência:
+Teste N3 - Saque acima do saldo
+ERRO - Saldo insuficiente
+
+Template — Caso de Teste 2
+ID: CT-002
+Título/Objetivo: Validar bloqueio de transferência para conta inexistente
+Pré-condição: Conta 'tony' existente. Conta 'thor' INEXISTENTE.
+Passos:
+1. Executar banco.transferir('tony', 'thor', 50)
+2. Observar a mensagem de saída
+Resultado esperado: O sistema deve exibir mensagem de erro informando que a conta destino não foi encontrada.
+Resultado obtido: ERRO - Conta destino não encontrada
+Status (Pass/Fail): Pass
+Evidência:
+Teste N4 - Transferência para conta inexistente
+ERRO - Conta destino não encontrada
+
+Template — Caso de Teste 3
+ID: CT-003
+Título/Objetivo: Validar erro ao consultar saldo de conta inexistente
+Pré-condição: Conta 'natasha' INEXISTENTE.
+Passos:
+1. Executar banco.saldo_atual('natasha')
+2. Observar a mensagem de saída
+Resultado esperado: O sistema deve exibir mensagem de erro informando que a conta não foi encontrada.
+Resultado obtido: ERRO - Conta não encontrada: natasha
+Status (Pass/Fail): Pass
+Evidência:
+Teste N5 - Consulta de conta inexistente (saldo)
+ERRO - Conta não encontrada: natasha
+
+
+PARTE 05 — Bug Report (atividade)
+
+Template — Bug Report 1
+Título: Sistema permite depósito com valor zero
+Severidade (Baixa/Média/Alta): Baixa
+Prioridade (Baixa/Média/Alta): Baixa
+Ambiente: Windows / Python 3.x / Banco do Stark
+Descrição:
+O sistema aceita depósitos de valor 0, gerando uma entrada no extrato sem alteração de saldo, o que é um comportamento desnecessário e viola a regra de negócio "Depósito: valor deve ser > 0".
+Passos para reproduzir:
+1. Instanciar o BancoDoStark e criar uma conta (ex: 'tony')
+2. Executar banco.depositar('tony', 0)
+3. Verificar a saída e o extrato
+Resultado esperado: O sistema deveria rejeitar o depósito com uma mensagem de erro ou aviso, pois o valor deve ser maior que 0.
+Resultado obtido: O sistema processou o depósito com sucesso ("OK - Depósito realizado: 0").
+Evidência:
+Teste N1 - Depósito com valor zero
+OK - Depósito realizado: 0
+Impacto/Risco: Baixo. Poluição do extrato com transações nulas.
+
+Template — Bug Report 2
+Título: Sistema permite depósito com valor negativo (reduz saldo)
+Severidade (Baixa/Média/Alta): Alta
+Prioridade (Baixa/Média/Alta): Alta
+Ambiente: Windows / Python 3.x / Banco do Stark
+Descrição:
+O sistema aceita depósitos com valores negativos, o que causa a redução do saldo do cliente indevidamente, funcionando como um saque não autorizado. Viola a regra "Depósito: valor deve ser > 0".
+Passos para reproduzir:
+1. Instanciar o BancoDoStark e criar uma conta (ex: 'tony' com saldo inicial)
+2. Executar banco.depositar('tony', -100)
+3. Verificar o saldo da conta
+Resultado esperado: O sistema deve rejeitar valores negativos no depósito.
+Resultado obtido: O sistema processou o depósito negativo ("OK - Depósito realizado: -100") e o saldo foi reduzido.
+Evidência:
+Teste N2 - Depósito negativo
+OK - Depósito realizado: -100
+Impacto/Risco: Alto. Perda financeira para o cliente ou inconsistência contábil grave.
+
+Template — Bug Report 3
+Título: Sistema permite transferência com valor negativo (fraude financeira)
+Severidade (Baixa/Média/Alta): Crítica
+Prioridade (Baixa/Média/Alta): Alta
+Ambiente: Windows / Python 3.x / Banco do Stark
+Descrição:
+O sistema permite transferências com valores negativos. Isso inverte a lógica da transferência: a conta de origem RECEBE o valor (subtração de negativo vira soma) e a conta de destino PERDE o valor (soma de negativo vira subtração). Isso permite criar dinheiro na conta de origem sem lastro.
+Passos para reproduzir:
+1. Ter duas contas existentes ('tony' e 'pepper')
+2. Executar banco.transferir('tony', 'pepper', -50)
+3. Verificar o saldo de 'tony' (origem)
+Resultado esperado: O sistema deve impedir transferências com valor <= 0.
+Resultado obtido: A transferência foi realizada ("OK - Transferência realizada: -50"). O saldo de 'tony' aumentou em 50 e o de 'pepper' diminuiu em 50.
+Evidência:
+Teste Extra 2 - Transferência com valor negativo
+OK - Transferência realizada: -50
+Impacto/Risco: Crítico. Permite fraude onde um usuário pode "roubar" dinheiro de outro ou inflar seu próprio saldo apenas iniciando uma transferência negativa.
